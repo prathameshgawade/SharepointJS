@@ -1,5 +1,6 @@
 $SP = $SP || {};
 
+
 $SP.Configuration = {
     RESULT_METADATA: {
         VERBOSE: "application/json; odata=verbose",
@@ -8,29 +9,29 @@ $SP.Configuration = {
     }
 }
 
-$SP.HTTP = function() {
+$SP.HTTP = function () {
     function Read(url, metadata) {
         var deferred = $.Deferred();
-		var acceptFormat = "";
+        var acceptFormat = "";
         metadata = metadata || $SP.Configuration.VERBOSE;
-        
-		$.ajax({
-			url: url,
-			type: "GET",
-			headers: {
-				"accept": acceptFormat
-			},
-			success: function (response, status, xhr) {
-				deferred.resolve(response);
-			},
-			error: function (error, status, xhr) {
-				deferred.reject(error);
-			}
-		});
-        
-		return deferred.promise();
+
+        $.ajax({
+            url: url,
+            type: "GET",
+            headers: {
+                "accept": acceptFormat
+            },
+            success: function (response, status, xhr) {
+                deferred.resolve(response);
+            },
+            error: function (error, status, xhr) {
+                deferred.reject(error);
+            }
+        });
+
+        return deferred.promise();
     }
-    
+
     function Create() {
 
     }
@@ -51,7 +52,7 @@ $SP.HTTP = function() {
     }
 }();
 
-$SP.List = function(){
+$SP.List = function () {
     function GetItems(listName, queryString) {
 
     }
@@ -126,7 +127,7 @@ $SP.List = function(){
     }
 }();
 
-$SP.Document = function() {
+$SP.Document = function () {
     function Add(folderPath, file, override) {
 
     }
@@ -138,7 +139,7 @@ $SP.Document = function() {
     function DiscardCheckOut(path) {
 
     }
-   
+
     function CheckIn(path, comments, publishMajorVersion) {
 
     }
@@ -166,7 +167,7 @@ $SP.Document = function() {
     }
 }();
 
-$SP.Folder = function() {
+$SP.Folder = function () {
     function Add(parentFolderPath, folderName) {
 
     }
@@ -181,7 +182,7 @@ $SP.Folder = function() {
     }
 }();
 
-$SP.UI = function() {
+$SP.UI = function () {
     function InitializePeoplePicker() {
 
     }
@@ -221,7 +222,7 @@ $SP.UI = function() {
     }
 }();
 
-$SP.User = function() {
+$SP.User = function () {
     function Ensure() {
 
     }
@@ -231,27 +232,27 @@ $SP.User = function() {
     }
 }();
 
-$SP.Groups = function() {
+$SP.Groups = function () {
     return {}
 }();
 
-$SP.Web = function() {
+$SP.Web = function () {
     return {}
 }();
 
-$SP.Site = function() {
+$SP.Site = function () {
     return {}
 }();
 
-$SP.Search = function() {
+$SP.Search = function () {
     return {}
 }();
 
-$SP.UserProfile = function() {
+$SP.UserProfile = function () {
     return {}
 }();
 
-$SP.Common = function() {
+$SP.Common = function () {
     function GetNewRequestDigestValue() {
 
     }
