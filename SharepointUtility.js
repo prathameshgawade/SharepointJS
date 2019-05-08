@@ -1,5 +1,56 @@
 $SP = $SP || {};
 
+$SP.Configuration = {
+    RESULT_METADATA: {
+        VERBOSE: "application/json; odata=verbose",
+        MINIMAL_METADATA: "application/json; odata=minimalmetadata",
+        NO_METADATA: "application/json; odata=nometadata"
+    }
+}
+
+$SP.HTTP = function() {
+    function Read(url, metadata) {
+        var deferred = $.Deferred();
+		var acceptFormat = "";
+        metadata = metadata || $SP.Configuration.VERBOSE;
+        
+		$.ajax({
+			url: url,
+			type: "GET",
+			headers: {
+				"accept": acceptFormat
+			},
+			success: function (response, status, xhr) {
+				deferred.resolve(response);
+			},
+			error: function (error, status, xhr) {
+				deferred.reject(error);
+			}
+		});
+        
+		return deferred.promise();
+    }
+    
+    function Create() {
+
+    }
+
+    function Update() {
+
+    }
+
+    function Delete() {
+
+    }
+
+    return {
+        Read: Read,
+        Create: Create,
+        Update: Update,
+        Delete: Delete
+    }
+}();
+
 $SP.List = function(){
     function GetItems(listName, queryString) {
 
@@ -199,3 +250,13 @@ $SP.Search = function() {
 $SP.UserProfile = function() {
     return {}
 }();
+
+$SP.Common = function() {
+    function GetNewRequestDigestValue() {
+
+    }
+
+    return {
+        GetNewRequestDigestValue: GetNewRequestDigestValue
+    }
+}
