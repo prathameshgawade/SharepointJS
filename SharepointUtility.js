@@ -1,6 +1,5 @@
 $SP = $SP || {};
 
-
 $SP.Configuration = {
     RESULT_METADATA: {
         VERBOSE: "application/json; odata=verbose",
@@ -10,10 +9,9 @@ $SP.Configuration = {
 }
 
 $SP.HTTP = function () {
-    function Read(url, metadata) {
+    function Read(url, acceptFormat) {
         var deferred = $.Deferred();
-        var acceptFormat = "";
-        metadata = metadata || $SP.Configuration.VERBOSE;
+        acceptFormat = acceptFormat || $SP.Configuration.VERBOSE;
 
         $.ajax({
             url: url,
@@ -32,16 +30,78 @@ $SP.HTTP = function () {
         return deferred.promise();
     }
 
-    function Create() {
+    function Create(url, data) {
+        var deferred = $.Deferred();
+        var acceptFormat = $SP.Configuration.VERBOSE;
 
+        $.ajax({
+            url: url,
+            type: "POST",
+            headers: {
+                "accept": acceptFormat,
+                "X-RequestDigest": $("#__REQUESTDIGEST").val(),
+                "content-Type": $SP.Configuration.VERBOSE
+            },
+            data: JSON.stringify(data),
+            success: function (data, status, xhr) {
+                deferred.resolve(data)
+            },
+            error: function (error, status, xhr) {
+                deferred.reject(error);
+            }
+        });
+
+        return deferred.promise();
     }
 
-    function Update() {
+    function Update(url, data, etag) {
+        var deferred = $.Deferred();
+        var acceptFormat = acceptFormat || $SP.Configuration.VERBOSE;
+        etag = etag || "*";
 
+        $.ajax({
+            url: url,
+            type: "POST",
+            headers: {
+                "accept": acceptFormat,
+                "X-RequestDigest": $("#__REQUESTDIGEST").val(),
+                "content-Type": $SP.Configuration.VERBOSE,
+                "X-Http-Method": "MERGE",
+                "If-Match": etag
+            },
+            data: JSON.stringify(data),
+            success: function (data, status, xhr) {
+                deferred.resolve(data);
+            },
+            error: function (error, status, xhr) {
+                deferred.reject(error);
+            }
+        });
+
+        return deferred.promise();
     }
 
-    function Delete() {
+    function Delete(url) {
+        var deferred = $.Deferred();
+        var acceptFormat = acceptFormat || $SP.Configuration.VERBOSE;
 
+        $.ajax({
+            url: url,
+            type: "DELETE",
+            headers: {
+                "accept": acceptFormat,
+                "X-RequestDigest": $("#__REQUESTDIGEST").val(),
+                "If-Match": "*"
+            },
+            success: function (data, status, xhr) {
+                deferred.resolve(data)
+            },
+            error: function (error, status, xhr) {
+                deferred.reject(error);
+            }
+        });
+
+        return deferred.promise();
     }
 
     return {
@@ -223,9 +283,13 @@ $SP.UI = function () {
 }();
 
 $SP.User = function () {
-    function Ensure() {
+    function Ensure(loginName) {
+        var payload = { 'logonName': loginName };
+        var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/ensureuser";
 
+        return $SP.HTTP.Create(url, payload)
     }
+
 
     return {
         Ensure: Ensure
