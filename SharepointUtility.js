@@ -1,4 +1,4 @@
-$SP = $SP || {};
+var $SP = Window.$SP || {};
 
 $SP.Configuration = {
     RESULT_METADATA: {
@@ -114,15 +114,83 @@ $SP.HTTP = function () {
 
 $SP.List = function () {
     function GetItems(listName, queryString) {
+        var def = $.Deferred();
+        var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items";
 
+        if(queryString)
+            url += queryString
+
+        $SP.HTTP.Read(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+            .done(function(response) {
+                if(response && response.value)
+                    def.resolve(response.value);
+                else
+                    def.resolve([]);
+            })
+            .fail(function(error) {
+                def.reject(error);
+            });
+
+        return def.promise();
     }
 
-    function GetAllItems(listName) {
+    function GetAllItems(listName, queryString) {
+        var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items";
 
+        if(queryString)
+            url += queryString
+
+        return _getAllItems(url);
     }
 
-    function GetItemById(listName, id) {
+    function _getAllItems(url, data) {
+        var def = $.Deferred();
+        var data = data || [];
 
+        $SP.HTTP.Read(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+            .done(function(response) {
+                if (response.value && response.value.length > 0) {
+					data = $.merge(data, response.value);
+                }
+
+                // Recursion
+                if (response['odata.nextLink']) {
+                    _getAllItems(response['odata.nextLink'], data)
+                        .done(function(response) {
+                            data = $.merge(data, response);
+							def.resolve(data);
+                        })
+                        .fail(function (error) {
+							def.reject(error);
+						});
+                }
+                else {
+                    def.resolve(data);
+                }
+            })
+            .fail(function(error) {
+                def.resolve(error);
+            })
+
+        return def.promise();
+    }
+
+    function GetItem(listName, id, queryString) {
+        var def = $.Deferred();
+        var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items(" + id + ")";
+
+        if(queryString)
+            url += queryString
+
+        $SP.HTTP.Read(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+            .done(function(response) {
+                def.resolve(response);
+            })
+            .fail(function(error) {
+                def.reject(error);
+            });
+
+        return def.promise();
     }
 
     function AddItem(listName, data) {
@@ -172,7 +240,7 @@ $SP.List = function () {
     return {
         GetItems: GetItems,
         GetAllItems: GetAllItems,
-        GetItemById: GetItemById,
+        GetItem: GetItem,
         AddItem: AddItem,
         UpdateItem: UpdateItem,
         DeleteItem: DeleteItem,
@@ -243,20 +311,51 @@ $SP.Folder = function () {
 }();
 
 $SP.UI = function () {
-    function InitializePeoplePicker() {
-
-    }
-
-    function ClearPeoplePicker() {
-
+    function InitializePeoplePicker(peoplePickerElementId, AllowMultipleValues) {
+        // Create a schema to store picker properties, and set the properties.  
+        var schema = {};  
+        schema['SearchPrincipalSource'] = 15;  
+        schema['ResolvePrincipalSource'] = 15;  
+        schema['MaximumEntitySuggestions'] = 50;  
+        schema['Width'] = '280px';  
+        schema['AllowMultipleValues'] = AllowMultipleValues;  
+		schema['PrincipalAccountType'] = 'User';  
+		        
+        // Render and initialize the picker.  
+        // Pass the ID of the DOM element that contains the picker, an array of initial  
+        // PickerEntity objects to set the picker value, and a schema that defines  
+        // picker properties.  
+        window.SPClientPeoplePicker_InitStandaloneControlWrapper(peoplePickerElementId, null, schema); 
     }
 
     function ReadPeoplePicker() {
 
     }
 
-    function SetPeoplePicker() {
+    function ClearPeoplePicker(peoplePickerElementId) {
+        var peoplePicker = SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + '_TopSpan'];
+		var resovledListElmId = peoplePicker.ResolvedListElementId;		
+		$('#' + resovledListElmId).children().each(function(index, element) {
+			peoplePicker.DeleteProcessedUser(element);
+		});	
+    }
 
+    function SetPeoplePicker(peoplePickerElementId, userLoginNames) {
+        if(!IsNullOrUndefined(userLoginNames))
+		{
+			$(userLoginNames).each(function(i, userLoginName)
+			{
+				SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + "_TopSpan"].AddUserKeys(userLoginName);
+			});
+		}
+    }
+
+    function EnablePeoplePicker(peoplePickerElementId) {
+        SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + "_TopSpan"].SetEnabledState(true);
+    }
+
+    function DisablePeoplePicker(peoplePickerElementId) {
+        SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + "_TopSpan"].SetEnabledState(false);
     }
 
     function InitializeCascadedDropdown() {
@@ -276,8 +375,13 @@ $SP.UI = function () {
         ClearPeoplePicker: ClearPeoplePicker,
         ReadPeoplePicker: ReadPeoplePicker,
         SetPeoplePicker: SetPeoplePicker,
+        EnablePeoplePicker: EnablePeoplePicker,
+        DisablePeoplePicker: DisablePeoplePicker,
+
         InitializeCascadedDropdown: InitializeCascadedDropdown,
+        
         IntializeChoiceDropdown: IntializeChoiceDropdown,
+
         IntializeLookupDropdown: IntializeLookupDropdown
     }
 }();
