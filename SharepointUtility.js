@@ -117,17 +117,17 @@ $SP.List = function () {
         var def = $.Deferred();
         var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items";
 
-        if(queryString)
+        if (queryString)
             url += queryString
 
         $SP.HTTP.Read(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
-            .done(function(response) {
-                if(response && response.value)
+            .done(function (response) {
+                if (response && response.value)
                     def.resolve(response.value);
                 else
                     def.resolve([]);
             })
-            .fail(function(error) {
+            .fail(function (error) {
                 def.reject(error);
             });
 
@@ -137,7 +137,7 @@ $SP.List = function () {
     function GetAllItems(listName, queryString) {
         var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items";
 
-        if(queryString)
+        if (queryString)
             url += queryString
 
         return _getAllItems(url);
@@ -148,27 +148,26 @@ $SP.List = function () {
         var data = data || [];
 
         $SP.HTTP.Read(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
-            .done(function(response) {
+            .done(function (response) {
                 if (response.value && response.value.length > 0) {
-					data = $.merge(data, response.value);
+                    data = $.merge(data, response.value);
                 }
 
                 // Recursion
                 if (response['odata.nextLink']) {
                     _getAllItems(response['odata.nextLink'], data)
-                        .done(function(response) {
+                        .done(function (response) {
                             data = $.merge(data, response);
-							def.resolve(data);
+                            def.resolve(data);
                         })
                         .fail(function (error) {
-							def.reject(error);
-						});
-                }
-                else {
+                            def.reject(error);
+                        });
+                } else {
                     def.resolve(data);
                 }
             })
-            .fail(function(error) {
+            .fail(function (error) {
                 def.resolve(error);
             })
 
@@ -179,14 +178,14 @@ $SP.List = function () {
         var def = $.Deferred();
         var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items(" + id + ")";
 
-        if(queryString)
+        if (queryString)
             url += queryString
 
         $SP.HTTP.Read(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
-            .done(function(response) {
+            .done(function (response) {
                 def.resolve(response);
             })
-            .fail(function(error) {
+            .fail(function (error) {
                 def.reject(error);
             });
 
@@ -313,19 +312,19 @@ $SP.Folder = function () {
 $SP.UI = function () {
     function InitializePeoplePicker(peoplePickerElementId, AllowMultipleValues) {
         // Create a schema to store picker properties, and set the properties.  
-        var schema = {};  
-        schema['SearchPrincipalSource'] = 15;  
-        schema['ResolvePrincipalSource'] = 15;  
-        schema['MaximumEntitySuggestions'] = 50;  
-        schema['Width'] = '280px';  
-        schema['AllowMultipleValues'] = AllowMultipleValues;  
-		schema['PrincipalAccountType'] = 'User';  
-		        
+        var schema = {};
+        schema['SearchPrincipalSource'] = 15;
+        schema['ResolvePrincipalSource'] = 15;
+        schema['MaximumEntitySuggestions'] = 50;
+        schema['Width'] = '280px';
+        schema['AllowMultipleValues'] = AllowMultipleValues;
+        schema['PrincipalAccountType'] = 'User';
+
         // Render and initialize the picker.  
         // Pass the ID of the DOM element that contains the picker, an array of initial  
         // PickerEntity objects to set the picker value, and a schema that defines  
         // picker properties.  
-        window.SPClientPeoplePicker_InitStandaloneControlWrapper(peoplePickerElementId, null, schema); 
+        window.SPClientPeoplePicker_InitStandaloneControlWrapper(peoplePickerElementId, null, schema);
     }
 
     function ReadPeoplePicker() {
@@ -334,20 +333,18 @@ $SP.UI = function () {
 
     function ClearPeoplePicker(peoplePickerElementId) {
         var peoplePicker = SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + '_TopSpan'];
-		var resovledListElmId = peoplePicker.ResolvedListElementId;		
-		$('#' + resovledListElmId).children().each(function(index, element) {
-			peoplePicker.DeleteProcessedUser(element);
-		});	
+        var resovledListElmId = peoplePicker.ResolvedListElementId;
+        $('#' + resovledListElmId).children().each(function (index, element) {
+            peoplePicker.DeleteProcessedUser(element);
+        });
     }
 
     function SetPeoplePicker(peoplePickerElementId, userLoginNames) {
-        if(!IsNullOrUndefined(userLoginNames))
-		{
-			$(userLoginNames).each(function(i, userLoginName)
-			{
-				SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + "_TopSpan"].AddUserKeys(userLoginName);
-			});
-		}
+        if (!IsNullOrUndefined(userLoginNames)) {
+            $(userLoginNames).each(function (i, userLoginName) {
+                SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + "_TopSpan"].AddUserKeys(userLoginName);
+            });
+        }
     }
 
     function EnablePeoplePicker(peoplePickerElementId) {
@@ -379,7 +376,7 @@ $SP.UI = function () {
         DisablePeoplePicker: DisablePeoplePicker,
 
         InitializeCascadedDropdown: InitializeCascadedDropdown,
-        
+
         IntializeChoiceDropdown: IntializeChoiceDropdown,
 
         IntializeLookupDropdown: IntializeLookupDropdown
@@ -388,7 +385,9 @@ $SP.UI = function () {
 
 $SP.User = function () {
     function Ensure(loginName) {
-        var payload = { 'logonName': loginName };
+        var payload = {
+            'logonName': loginName
+        };
         var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/ensureuser";
 
         return $SP.HTTP.Create(url, payload)
