@@ -56,7 +56,7 @@ $SP.HTTP = function () {
 
     function Update(url, data, etag) {
         var deferred = $.Deferred();
-        var acceptFormat = acceptFormat || $SP.Configuration.VERBOSE;
+        var acceptFormat = $SP.Configuration.VERBOSE;
         etag = etag || "*";
 
         $.ajax({
@@ -83,7 +83,7 @@ $SP.HTTP = function () {
 
     function Delete(url) {
         var deferred = $.Deferred();
-        var acceptFormat = acceptFormat || $SP.Configuration.VERBOSE;
+        var acceptFormat = $SP.Configuration.VERBOSE;
 
         $.ajax({
             url: url,
@@ -113,36 +113,6 @@ $SP.HTTP = function () {
 }();
 
 $SP.List = function () {
-    function GetItems(listName, queryString) {
-        var def = $.Deferred();
-        var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items";
-
-        if (queryString)
-            url += queryString
-
-        $SP.HTTP.Read(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
-            .done(function (response) {
-                if (response && response.value)
-                    def.resolve(response.value);
-                else
-                    def.resolve([]);
-            })
-            .fail(function (error) {
-                def.reject(error);
-            });
-
-        return def.promise();
-    }
-
-    function GetAllItems(listName, queryString) {
-        var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items";
-
-        if (queryString)
-            url += queryString
-
-        return _getAllItems(url);
-    }
-
     function _getAllItems(url, data) {
         var def = $.Deferred();
         var data = data || [];
@@ -172,6 +142,36 @@ $SP.List = function () {
             })
 
         return def.promise();
+    }
+
+    function GetItems(listName, queryString) {
+        var def = $.Deferred();
+        var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items";
+
+        if (queryString)
+            url += queryString
+
+        $SP.HTTP.Read(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+            .done(function (response) {
+                if (response && response.value)
+                    def.resolve(response.value);
+                else
+                    def.resolve([]);
+            })
+            .fail(function (error) {
+                def.reject(error);
+            });
+
+        return def.promise();
+    }
+
+    function GetAllItems(listName, queryString) {
+        var url = _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getByTitle('" + listName + "')/items";
+
+        if (queryString)
+            url += queryString
+
+        return _getAllItems(url);
     }
 
     function GetItem(listName, id, queryString) {
