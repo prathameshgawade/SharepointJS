@@ -27,7 +27,7 @@
 
         return deferred.promise();
     }
-    
+
     // End of Private Functions region >>>
 
     // Init commonly used prototype functions
@@ -598,10 +598,15 @@
             return ((date instanceof Date) ? date.toISOString() : new Date(date).toISOString());
         }
 
+        function IsNullOrUndefined(value) {
+            return value == null || value == undefined;
+        }
+
         return {
             GetNewRequestDigestValue: GetNewRequestDigestValue,
             GenerateRandomAlphaNum: GenerateRandomAlphaNum,
-            ConvertDateTOISO: ConvertDateTOISO
+            ConvertDateTOISO: ConvertDateTOISO,
+            IsNullOrUndefined: IsNullOrUndefined
         }
     }
 
@@ -636,7 +641,7 @@
         }
 
         function SetPeoplePicker(peoplePickerElementId, userLoginNames) {
-            if (!IsNullOrUndefined(userLoginNames)) {
+            if (!$SP.Common.IsNullOrUndefined(userLoginNames)) {
                 $(userLoginNames).each(function (i, userLoginName) {
                     SPClientPeoplePicker.SPClientPeoplePickerDict[peoplePickerElementId + "_TopSpan"].AddUserKeys(userLoginName);
                 });
