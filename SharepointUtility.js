@@ -1,9 +1,8 @@
 /**
  * 
  */
+var $SP = Window.$SP || {};
 (function () {
-    var $SP = Window.$SP || {};
-
     //<<< Start of Private Functions region
 
     /**
@@ -35,23 +34,12 @@
         // String Format
         if (typeof String.prototype.format !== 'function') {
             String.prototype.format = function (args) {
-                var str = this;
-                return str.replace(String.prototype.format.regex, function (item) {
-                    var intVal = parseInt(item.substring(1, item.length - 1));
-                    var replace;
-                    if (intVal >= 0) {
-                        replace = args[intVal];
-                    } else if (intVal === -1) {
-                        replace = "{";
-                    } else if (intVal === -2) {
-                        replace = "}";
-                    } else {
-                        replace = "";
-                    }
-                    return replace;
-                });
+                var a = this;
+                for (var k in arguments) {
+                    a = a.replace(new RegExp("\\{" + k + "\\}", 'g'), arguments[k]);
+                }
+                return a
             };
-            String.prototype.format.regex = new RegExp("{-?[0-9]+}", "g");
         }
     })()
 
@@ -71,7 +59,7 @@
     $SP.HTTP = function () {
         function Get(url, acceptFormat) {
             var deferred = $.Deferred();
-            acceptFormat = acceptFormat || $SP.Configuration.VERBOSE;
+            acceptFormat = acceptFormat || $SP.Configuration.RESULT_METADATA.VERBOSE;
 
             $.ajax({
                 url: url,
@@ -92,7 +80,7 @@
 
         function Post(url, data) {
             var deferred = $.Deferred();
-            var acceptFormat = $SP.Configuration.VERBOSE;
+            var acceptFormat = $SP.Configuration.RESULT_METADATA.VERBOSE;
 
             $.ajax({
                 url: url,
@@ -100,7 +88,7 @@
                 headers: {
                     "accept": acceptFormat,
                     "X-RequestDigest": $("#__REQUESTDIGEST").val(),
-                    "content-Type": $SP.Configuration.VERBOSE
+                    "content-Type": $SP.Configuration.RESULT_METADATA.VERBOSE
                 },
                 data: JSON.stringify(data),
                 success: function (data, status, xhr) {
@@ -116,7 +104,7 @@
 
         function Update(url, data, etag) {
             var deferred = $.Deferred();
-            var acceptFormat = $SP.Configuration.VERBOSE;
+            var acceptFormat = $SP.Configuration.RESULT_METADATA.VERBOSE;
             etag = etag || "*";
 
             $.ajax({
@@ -125,7 +113,7 @@
                 headers: {
                     "accept": acceptFormat,
                     "X-RequestDigest": $("#__REQUESTDIGEST").val(),
-                    "content-Type": $SP.Configuration.VERBOSE,
+                    "content-Type": $SP.Configuration.RESULT_METADATA.VERBOSE,
                     "X-Http-Method": "MERGE",
                     "If-Match": etag
                 },
@@ -143,7 +131,7 @@
 
         function Delete(url, etag) {
             var deferred = $.Deferred();
-            var acceptFormat = $SP.Configuration.VERBOSE;
+            var acceptFormat = $SP.Configuration.RESULT_METADATA.VERBOSE;
             etag = etag || "*";
 
             $.ajax({
@@ -178,8 +166,9 @@
             var def = $.Deferred();
             var data = data || [];
 
-            $SP.Http.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
                 .done(function (response) {
+                    console.log(response);
                     if (response.value && response.value.length > 0) {
                         data = $.merge(data, response.value);
                     }
@@ -187,9 +176,8 @@
                     // Recursion
                     if (response['odata.nextLink']) {
                         _getAllItems(response['odata.nextLink'], data)
-                            .done(function (response) {
-                                data = $.merge(data, response);
-                                def.resolve(data);
+                           .done(function (response1) {
+                                def.resolve(response1);
                             })
                             .fail(function (error) {
                                 def.reject(error);
@@ -199,7 +187,7 @@
                     }
                 })
                 .fail(function (error) {
-                    def.resolve(error);
+                    def.reject(error);
                 })
 
             return def.promise();
@@ -213,10 +201,10 @@
          */
         function GetItems(listName, queryString) {
             var def = $.Deferred();
-            var url = "{0}/_api/web/lists/getByTitle('{1}')/items{4}";
-            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, queryString ? queryString : "");
+            var url = "{0}/_api/web/lists/getByTitle('{1}')/items{2}";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, (queryString ? queryString : ""));
 
-            $SP.Http.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
                 .done(function (response) {
                     if (response && response.value)
                         def.resolve(response.value);
@@ -237,18 +225,24 @@
          * @returns {Promise}
          */
         function GetAllItems(listName, queryString) {
-            var url = "{0}/_api/web/lists/getByTitle('{1}')/items{4}";
-            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, queryString ? queryString : "");
+            var url = "{0}/_api/web/lists/getByTitle('{1}')/items{2}";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, (queryString ? queryString : ""));
 
             return _getAllItems(url);
         }
 
-        function GetItem(listName, id) {
+        /**
+         * Returns Particular List Item
+         * @param {string} listName Name of the list
+         * @param {number} id ID of the list item to be returned
+         * @returns {Promise}
+         */
+        function GetItem(listName, id, queryString) {
             var def = $.Deferred();
-            var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})";
-            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id);
+            var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2}){3}";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id, (queryString ? queryString : ""));
 
-            $SP.Http.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
                 .done(function (response) {
                     def.resolve(response);
                 })
@@ -267,16 +261,28 @@
          */
         function AddItem(listName, data) {
             var def = $.Deferred();
-            var url = "{0}/_api/web/lists/getByTitle('{1}')/items";
-            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName);
 
-            $SP.Http.Post(url, data)
-                .done(function (response) {
-                    def.resolve(response)
+           //Get List Item Entity Type Name
+           var url = "{0}/_api/web/lists/getByTitle('{1}')";
+           url = url.format(_spPageContextInfo.webAbsoluteUrl, listName);
+           $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+                .done(function(response) {
+                    data["__metadata"] = { type : response.ListItemEntityTypeFullName};
+
+                    // Add List Item
+                    url = "{0}/_api/web/lists/getByTitle('{1}')/items";
+                    url = url.format(_spPageContextInfo.webAbsoluteUrl, listName);
+                    $SP.HTTP.Post(url, data)
+                        .done(function (response) {
+                            def.resolve(response)
+                        })
+                        .fail(function (error) {
+                            def.reject(error)
+                        });
                 })
-                .fail(function (error) {
-                    def.reject(error)
-                });
+                .fail(function(error) {
+                    deferred.reject(error);
+                })
 
             return def.promise();
         }
@@ -291,16 +297,29 @@
          */
         function UpdateItem(listName, id, data, etag) {
             var def = $.Deferred();
-            var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})";
-            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id);
+            etag = etag || "*";
 
-            $SP.HTTP.Update(url, data, etag)
-                .done(function (response) {
-                    def.resolve(response)
-                })
-                .fail(function (error) {
-                    def.reject(error)
-                });
+            //Get List Item Entity Type Name
+            var url = "{0}/_api/web/lists/getByTitle('{1}')";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName);
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+                    .done(function(response) {
+                        data["__metadata"] = { type : response.ListItemEntityTypeFullName};
+
+                        // Update List Item
+                        var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})";
+                        url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id);
+                        $SP.HTTP.Update(url, data, etag)
+                                .done(function (response) {
+                                    def.resolve(response)
+                                })
+                                .fail(function (error) {
+                                    def.reject(error)
+                                });
+                    })
+                    .fail(function(error) {
+                        deferred.reject(error);
+                    });
 
             return def.promise();
         }
@@ -316,13 +335,13 @@
             var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id);
 
-            $SP.HTTP.Update(url, etag)
-                .done(function (response) {
-                    def.resolve(response)
-                })
-                .fail(function (error) {
-                    def.reject(error)
-                });
+            $SP.HTTP.Delete(url, etag)
+                        .done(function (response) {
+                            def.resolve(response)
+                        })
+                        .fail(function (error) {
+                            def.reject(error)
+                        });
 
             return def.promise();
         }
@@ -343,7 +362,7 @@
                     var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})/AttachmentFiles/add(FileName='{3}')";
                     url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id, fileName);
 
-                    $SP.Http.Post(url, buffer)
+                    $SP.HTTP.Post(url, buffer)
                         .done(function (response) {
                             def.resolve(response)
                         })
@@ -361,9 +380,14 @@
             var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})/AttachmentFiles";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id);
 
-            $SP.Http.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
                 .done(function (response) {
-                    def.resolve(response)
+                    if(response && response.value) {
+                        def.resolve(response.value)
+                    }
+                    else {
+                        def.resolve([]);
+                    }
                 })
                 .fail(function (error) {
                     def.reject(error)
@@ -376,7 +400,7 @@
             var def = $.Deferred();
 
             var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})/AttachmentFiles/getByFileName('{3}')";
-            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id, fileName);
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id, encodeURIComponent(fileName));
 
             $SP.HTTP.Delete(url)
                 .done(function (response) {
@@ -448,7 +472,7 @@
             var url = "{0}/_api/web/GetFolderByServerRelativeUrl('{1}')";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, folderServerRelativeURL);
 
-            $SP.Http.Get(url)
+            $SP.HTTP.Get(url)
                 .done(function (response) {
                     def.resolve(response)
                 })
@@ -480,7 +504,7 @@
                 'ServerRelativeUrl': "{0}/{1}".format(folderServerRelativeURL, folderName)
             }
 
-            $SP.Http.Post(url, data)
+            $SP.HTTP.Post(url, data)
                 .done(function (response) {
                     def.resolve(response)
                 })
@@ -554,7 +578,7 @@
             var url = "{0}/_api/web/ensureuser";
             url = url.format(_spPageContextInfo.webAbsoluteUrl);
 
-            return $SP.Http.Post(url, data);
+            return $SP.HTTP.Post(url, data);
         }
 
 
@@ -683,4 +707,4 @@
             IntializeLookupDropdown: IntializeLookupDropdown
         }
     }();
-})();
+}());
