@@ -176,7 +176,7 @@ var $SP = Window.$SP || {};
                     // Recursion
                     if (response['odata.nextLink']) {
                         _getAllItems(response['odata.nextLink'], data)
-                           .done(function (response1) {
+                            .done(function (response1) {
                                 def.resolve(response1);
                             })
                             .fail(function (error) {
@@ -262,12 +262,14 @@ var $SP = Window.$SP || {};
         function AddItem(listName, data) {
             var def = $.Deferred();
 
-           //Get List Item Entity Type Name
-           var url = "{0}/_api/web/lists/getByTitle('{1}')";
-           url = url.format(_spPageContextInfo.webAbsoluteUrl, listName);
-           $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
-                .done(function(response) {
-                    data["__metadata"] = { type : response.ListItemEntityTypeFullName};
+            //Get List Item Entity Type Name
+            var url = "{0}/_api/web/lists/getByTitle('{1}')";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, listName);
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+                .done(function (response) {
+                    data["__metadata"] = {
+                        type: response.ListItemEntityTypeFullName
+                    };
 
                     // Add List Item
                     url = "{0}/_api/web/lists/getByTitle('{1}')/items";
@@ -280,7 +282,7 @@ var $SP = Window.$SP || {};
                             def.reject(error)
                         });
                 })
-                .fail(function(error) {
+                .fail(function (error) {
                     deferred.reject(error);
                 })
 
@@ -303,23 +305,25 @@ var $SP = Window.$SP || {};
             var url = "{0}/_api/web/lists/getByTitle('{1}')";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, listName);
             $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
-                    .done(function(response) {
-                        data["__metadata"] = { type : response.ListItemEntityTypeFullName};
+                .done(function (response) {
+                    data["__metadata"] = {
+                        type: response.ListItemEntityTypeFullName
+                    };
 
-                        // Update List Item
-                        var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})";
-                        url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id);
-                        $SP.HTTP.Update(url, data, etag)
-                                .done(function (response) {
-                                    def.resolve(response)
-                                })
-                                .fail(function (error) {
-                                    def.reject(error)
-                                });
-                    })
-                    .fail(function(error) {
-                        deferred.reject(error);
-                    });
+                    // Update List Item
+                    var url = "{0}/_api/web/lists/getByTitle('{1}')/items({2})";
+                    url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id);
+                    $SP.HTTP.Update(url, data, etag)
+                        .done(function (response) {
+                            def.resolve(response)
+                        })
+                        .fail(function (error) {
+                            def.reject(error)
+                        });
+                })
+                .fail(function (error) {
+                    deferred.reject(error);
+                });
 
             return def.promise();
         }
@@ -336,12 +340,12 @@ var $SP = Window.$SP || {};
             url = url.format(_spPageContextInfo.webAbsoluteUrl, listName, id);
 
             $SP.HTTP.Delete(url, etag)
-                        .done(function (response) {
-                            def.resolve(response)
-                        })
-                        .fail(function (error) {
-                            def.reject(error)
-                        });
+                .done(function (response) {
+                    def.resolve(response)
+                })
+                .fail(function (error) {
+                    def.reject(error)
+                });
 
             return def.promise();
         }
@@ -382,10 +386,9 @@ var $SP = Window.$SP || {};
 
             $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
                 .done(function (response) {
-                    if(response && response.value) {
+                    if (response && response.value) {
                         def.resolve(response.value)
-                    }
-                    else {
+                    } else {
                         def.resolve([]);
                     }
                 })
@@ -439,12 +442,24 @@ var $SP = Window.$SP || {};
         function CheckIn(fileServerRelativeURL, comments, checkInType) {
             var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')/CheckIn(comment={2},checkintype={3})";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL, comments, checkInType);
-
         }
 
-        function Delete(fileServerRelativeURL) {
+        function Delete(fileServerRelativeURL, etag) {
+            var def = $.Deferred();
+
             var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL);
+            etag = etag || "*";
+
+            $SP.HTTP.Delete(url, etag)
+                .done(function (response) {
+                    def.resolve(response);
+                })
+                .fail(function (error) {
+                    def.reject(error);
+                });
+
+            return def.promise();
         }
 
         function UpdateContentType(fileServerRelativeURL, contentTypeName) {
@@ -466,11 +481,13 @@ var $SP = Window.$SP || {};
     }();
 
     $SP.Folder = function () {
-        function Get(folderServerRelativeURL) {
+        function Get(folderServerRelativeURL, acceptFormat) {
             var def = $.Deferred();
 
             var url = "{0}/_api/web/GetFolderByServerRelativeUrl('{1}')";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, folderServerRelativeURL);
+
+            acceptFormat = acceptFormat || $SP.Configuration.RESULT_METADATA.NO_METADATA;
 
             $SP.HTTP.Get(url)
                 .done(function (response) {
@@ -484,11 +501,36 @@ var $SP = Window.$SP || {};
         }
 
         function Rename(folderServerRelativeURL, name) {
+            var def = $.Deferred();
 
-        }
+            var url = "{0}/_api/web/GetFolderByServerRelativeUrl('{1}')/ListItemAllFields";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, folderServerRelativeURL);
 
-        function GetFile(folderServerRelativeURL, fileName) {
+            // GET Folder Entity Type Name
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.MINIMAL_METADATA)
+                .done(function (response) {
+                    // Rename Folder
+                    var data = {
+                        "__metadata": {
+                            "type": response["odata.type"]
+                        },
+                        "Title": name,
+                        "FileLeafRef": name
+                    }
 
+                    $SP.HTTP.Update(url, data)
+                        .done(function (response) {
+                            def.resolve(response);
+                        })
+                        .fail(function (error) {
+                            def.reject(error);
+                        })
+                })
+                .fail(function (error) {
+                    def.reject(error);
+                });
+
+            return def.promise();
         }
 
         function AddFolder(folderServerRelativeURL, folderName) {
@@ -516,7 +558,24 @@ var $SP = Window.$SP || {};
         }
 
         function AddFile(folderServerRelativeURL, file, fileName, override) {
+            var def = $.Deferred();
 
+            override = override || false;
+            var url = "{0}/_api/web/GetFolderByServerRelativeUrl('{1}')/Files/add(url='{2}',overwrite={3})";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, folderServerRelativeURL, fileName, override);
+
+            _getFileBuffer(file)
+                .then(function (buffer) {
+                    $SP.HTTP.Post(url, buffer)
+                        .done(function (response) {
+                            def.resolve(response);
+                        })
+                        .fail(function (error) {
+                            def.reject(error);
+                        });
+                });
+
+            return def.promise();
         }
 
         function Delete(folderServerRelativeURL) {
@@ -527,7 +586,28 @@ var $SP = Window.$SP || {};
 
             $SP.HTTP.Delete(url)
                 .done(function (response) {
-                    def.resolve(response)
+                    def.resolve(response);
+                })
+                .fail(function (error) {
+                    def.reject(error);
+                });
+
+            return def.promise();
+        }
+
+        function GetFolders(folderServerRelativeURL) {
+            var def = $.Deferred();
+
+            var url = "{0}/_api/web/GetFolderByServerRelativeUrl('{1}')/Folders";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, folderServerRelativeURL);
+
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+                .done(function (response) {
+                    if (response && response.value) {
+                        def.resolve(response.value)
+                    } else {
+                        def.resolve([]);
+                    }
                 })
                 .fail(function (error) {
                     def.reject(error)
@@ -536,19 +616,19 @@ var $SP = Window.$SP || {};
             return def.promise();
         }
 
-        function GetFolders(folderServerRelativeURL) {
-
-        }
-
         function GetFiles(folderServerRelativeURL) {
             var def = $.Deferred();
 
             var url = "{0}/_api/web/GetFolderByServerRelativeUrl('{1}')/Files";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, folderServerRelativeURL);
 
-            $SP.HTTP.Get(url)
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
                 .done(function (response) {
-                    def.resolve(response)
+                    if (response && response.value) {
+                        def.resolve(response.value)
+                    } else {
+                        def.resolve([]);
+                    }
                 })
                 .fail(function (error) {
                     def.reject(error)
@@ -560,7 +640,6 @@ var $SP = Window.$SP || {};
         return {
             Get: Get,
             Rename: Rename,
-            GetFile: GetFile,
             AddFolder: AddFolder,
             AddFile: AddFile,
             Delete: Delete,
@@ -581,14 +660,37 @@ var $SP = Window.$SP || {};
             return $SP.HTTP.Post(url, data);
         }
 
+        function GetInfo(userId) {
+            var url = "{0}/_api/Web/GetUserById({1})";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, userId);
+
+            return $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA);
+        }
+
+        function GetGroupMemberships(userId) {
+
+        }
 
         return {
-            Ensure: Ensure
+            Ensure: Ensure,
+            GetInfo: GetInfo,
+            GetGroupMemberships: GetGroupMemberships
         }
     }();
 
     $SP.Groups = function () {
-        return {}
+        function AddUserToGroup(groupName, userID) {
+
+        }
+
+        function RemoveUserFromGroup(groupName, userID) {
+
+        }
+
+        return {
+            AddUserToGroup: AddUserToGroup,
+            RemoveUserFromGroup: RemoveUserFromGroup
+        }
     }();
 
     $SP.Web = function () {
@@ -632,7 +734,7 @@ var $SP = Window.$SP || {};
             ConvertDateTOISO: ConvertDateTOISO,
             IsNullOrUndefined: IsNullOrUndefined
         }
-    }
+    }();
 
     $SP.UI = function () {
         function InitializePeoplePicker(peoplePickerElementId, AllowMultipleValues) {
@@ -688,7 +790,7 @@ var $SP = Window.$SP || {};
 
         }
 
-        function IntializeLookupDropdown() {
+        function IntializeLookupControl() {
 
         }
 
@@ -704,7 +806,7 @@ var $SP = Window.$SP || {};
 
             IntializeChoiceDropdown: IntializeChoiceDropdown,
 
-            IntializeLookupDropdown: IntializeLookupDropdown
+            IntializeLookupControl: IntializeLookupControl
         }
     }();
-}());
+})();
