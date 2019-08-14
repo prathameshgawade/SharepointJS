@@ -430,18 +430,60 @@ var $SP = Window.$SP || {};
     }();
 
     $SP.Document = function () {
+        function Get(fileServerRelativeURL, acceptFormat) {
+            var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL);
+
+            acceptFormat = acceptFormat || $SP.Configuration.RESULT_METADATA.VERBOSE;
+
+            return $SP.HTTP.Get(url, acceptFormat);
+        }
+
+        function GetData(fileServerRelativeURL, acceptFormat) {
+            var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')/$value";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL);
+
+            acceptFormat = acceptFormat || $SP.Configuration.RESULT_METADATA.VERBOSE;
+
+            return $SP.HTTP.Get(url, acceptFormat);
+        }
+
+        function GetVersions(fileServerRelativeURL) {
+            var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')/versions";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL);
+
+            return $SP.HTTP.Get(url);
+        }
+
+        function GetVersion(fileServerRelativeURL, versionID) {
+            var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')/versions({2})";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL, versionID);
+
+            return $SP.HTTP.Get(url);
+        }
+
         function CheckOut(fileServerRelativeURL) {
             var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')/CheckOut()",
                 url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL);
+
+            return $SP.HTTP.Post(url);
         }
 
         function DiscardCheckOut(fileServerRelativeURL) {
+            var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')/undocheckout()",
+                url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL);
 
+            return $SP.HTTP.Post(url);
         }
 
         function CheckIn(fileServerRelativeURL, comments, checkInType) {
-            var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')/CheckIn(comment={2},checkintype={3})";
+            comments = comments || "";
+            checkInType = $SP.Common.IsNullOrUndefined(checkInType) ? $SP.Configuration.CHECKIN_TYPE.MINOR_CHECKIN : checkInType;
+
+            var url = "{0}/_api/web/GetFileByServerRelativeUrl('{1}')/CheckIn(comment='{2}',checkintype={3})";
             url = url.format(_spPageContextInfo.webAbsoluteUrl, fileServerRelativeURL, comments, checkInType);
+
+            return $SP.HTTP.Post(url);
         }
 
         function Delete(fileServerRelativeURL, etag) {
@@ -471,6 +513,10 @@ var $SP = Window.$SP || {};
         }
 
         return {
+            Get: Get,
+            GetData: GetData,
+            GetVersions: GetVersions,
+            GetVersion: GetVersion,
             CheckOut: CheckOut,
             DiscardCheckOut: DiscardCheckOut,
             CheckIn: CheckIn,
@@ -668,7 +714,21 @@ var $SP = Window.$SP || {};
         }
 
         function GetGroupMemberships(userId) {
+            var def = $.Deferred();
 
+            var url = "{0}/_api/Web/GetUserById({1})/Groups";
+            url = url.format(_spPageContextInfo.webAbsoluteUrl, userId);
+
+            $SP.HTTP.Get(url, $SP.Configuration.RESULT_METADATA.NO_METADATA)
+                .done(function (response) {
+                    var result = (response && response.value) ? response.value : [];
+                    def.resolve(result);
+                })
+                .fail(function (error) {
+                    def.reject(error);
+                });
+
+            return def.promise();
         }
 
         return {
