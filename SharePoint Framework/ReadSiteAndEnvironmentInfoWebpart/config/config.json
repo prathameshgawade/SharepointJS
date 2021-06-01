@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "read-site-and-environment-info-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/readSiteAndEnvironmentInfo/ReadSiteAndEnvironmentInfoWebPart.js",
+          "manifest": "./src/webparts/readSiteAndEnvironmentInfo/ReadSiteAndEnvironmentInfoWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "ReadSiteAndEnvironmentInfoWebPartStrings": "lib/webparts/readSiteAndEnvironmentInfo/loc/{locale}.js"
+  }
+}
