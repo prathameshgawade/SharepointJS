@@ -3,8 +3,8 @@
     "isCreatingSolution": true,
     "environment": "spo",
     "version": "1.12.1",
-    "libraryName": "get-sharepoint-lists-webpart",
-    "libraryId": "ed757722-ee77-4f99-bc72-57afdb834a1b",
+    "libraryName": "get-share-point-lists-webpart",
+    "libraryId": "f6cac3c0-83d5-4854-8dfa-0077b23e699e",
     "packageManager": "npm",
     "isDomainIsolated": false,
     "componentType": "webpart"

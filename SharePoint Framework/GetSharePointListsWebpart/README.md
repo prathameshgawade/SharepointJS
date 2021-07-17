@@ -1,4 +1,4 @@
-# get-sharepoint-lists-webpart
+# get-share-point-lists-webpart
 
 ## Summary
 
